@@ -1,123 +1,128 @@
-/*
-WSAStartup()	// WinSock初期化
-socket()		// ソケット作成
-bind()			// ソケットアドレス情報の割り当て
-while(true)
-{
-	recvfrom()		// 受信
-	出力
-	送信メッセージ入力
-sendto()		// 送信
-}
-closesocket()		// ソケット破棄
-WSACleanup()		// WinSock終了処理
-*/
-
 #include <iostream>
+#include <string>
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 
 #pragma comment( lib, "ws2_32.lib" )
 
+///// 定数宣言 /////
+const unsigned short SERVER_PORT = 8888;	//ポート番号
+const unsigned int MESSAGE_LENGTH = 1024;	//送受信の最大文字数
+
+using std::cin;
 using std::cout;
 using std::endl;
+using std::string;
 
-// ポート番号
-const unsigned short SERVERPORT = 8888;
+int main() {
+	//結果格納用変数
+	int result = 0;
 
-// 送受信するメッセージの最大値
-const unsigned int MESSAGELENGTH = 1024;
+	//WinSock本体
+	WSADATA wsaData;
 
-// プロトタイプ宣言
-int InitWinSock();
-
-int main()
-{
-	cout << "You are Chat Server" << endl;
-
-	//初期化の結果を格納する変数
-	int ret;
-
-	// WinSockの初期化
-	ret = InitWinSock();
-	if (ret != 0) {
-		cout << "WinSock Initializing Error";
+	//初期化
+	result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (result != 0) {
+		cout << "Error : WinSock StartUp" << endl;
 		return -1;
 	}
-	cout << "Initialize WinSock is Success" << endl;
+	cout << "Success : WinSock StartUp" << endl;
 
-	// ソケットディスクリプタ
+	//ソケットディスクリプタ
 	SOCKET sock;
 
-	// UDPソケット作成
+	//UDPソケット作成
 	sock = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (sock < 0) {
-		cout << "Socket Creation Error" << endl;
+	if (sock == INVALID_SOCKET) {
+		cout << "Error : Create Socket" << endl;
 		return -1;
 	}
-	cout << "Create Socket is Success" << endl;
 
-	// ソケットに使用するポート番号を設定
+	cout << "Success : Create Socket" << endl;
+
+	//ソケットにポート情報を格納
 	SOCKADDR_IN bindAddr;
 	memset(&bindAddr, 0, sizeof(bindAddr));
 	bindAddr.sin_family = AF_INET;
 	bindAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	bindAddr.sin_port = htons(SERVERPORT);
+	bindAddr.sin_port = htons(SERVER_PORT);
 
-	ret = bind(sock, (SOCKADDR*)&bindAddr, sizeof(bindAddr));
-	if (ret == SOCKET_ERROR) {
-		cout << "IP address Bind Error" << endl;
+	result = bind(sock, (SOCKADDR*)&bindAddr, sizeof(bindAddr));
+	if (result == SOCKET_ERROR) {
+		cout << "Error : Bind Socket" << endl;
 		return -1;
 	}
-	cout << "Binding IP address is Success" << endl;
+	cout << "Success : Bind Socket" << endl;
 
-	cout << "\nYour IP Address is " << bindAddr.sin_addr.s_addr << endl;
+	cout << "Now Connecting..." << endl;
+	cout << "Server opens now! Let's Communicate with Others!" << endl;
+	//メインループ
+	while (true) {
+		///// メッセージ受信 /////
+		//上限値をサーバと合わせる
+		char buff[MESSAGE_LENGTH];	//受取用バッファ
 
-	// ループ
-	while (false)
-	{
-		char buff[MESSAGELENGTH];
 		SOCKADDR_IN fromAddr;
 		int fromlen = sizeof(fromAddr);
-		ret = recvfrom(sock, buff, MESSAGELENGTH, 0, (SOCKADDR*)&fromAddr, &fromlen);
-		if (ret == SOCKET_ERROR)
-		{
-			/*
-				エラー処理
-			*/
+		result = recvfrom(sock, buff, MESSAGE_LENGTH, 0, (SOCKADDR*)&fromAddr, &fromlen);
+		if (result == SOCKET_ERROR) {
+			cout << "Error : Recieve Message" << endl;
+			return -1;
 		}
-		else
-		{
-			std::cout << buff << std::endl;
+		else {
+			//表示
+			cout << "Receive Message : " << buff << endl;
+		}
+
+		///// メッセージ送信 /////
+		//string message;
+		//message.resize(MESSAGE_LENGTH);//上限値をサーバと合わせる
+		//std::cout << "Input Message : ";
+		//std::getline(cin, message);
+		char message[MESSAGE_LENGTH];	//メッセージ
+		std::cout << "Input Message : ";
+		cin >> message;
+
+		result = sendto(sock, message, MESSAGE_LENGTH, 0, (SOCKADDR*)&fromAddr, fromlen);
+		if (result == SOCKET_ERROR) {
+			cout << "Error : Message Sending" << endl;
+			return -1;
 		}
 	}
 
-
-	// ここまでこないけど、ソケット破棄
-	ret = closesocket(sock);
-	if (ret == SOCKET_ERROR)
-	{
-		/*
-			エラー処理
-		*/
+	//ソケットの後処理
+	result = closesocket(sock);
+	if (result == SOCKET_ERROR) {
+		cout << "Error : closesocket" << endl;
+		return -1;
 	}
 
-	// WinSockの終了処理
-	ret = WSACleanup();
-	if (ret == SOCKET_ERROR)
-	{
-		/*
-			エラー処理
-		*/
+	//WinSockの後処理
+	result = WSACleanup();
+	if (result != 0) {
+		cout << "Error : WSACleanup" << endl;
+		return -1;
 	}
-
 
 	return 0;
 }
 
-int InitWinSock() {
-	//WinSockを表す構造体
-	WSADATA wsaData;
-	// WinSockの初期化  WinSock2.2
-	return(WSAStartup(MAKEWORD(2, 2), &wsaData));
-}
+//WSAStartup()	// WinSock初期化
+//socket()		// ソケット作成
+///*
+//	サーバのソケットアドレス情報をセット
+//*/
+//while (true)
+//{
+//	/*
+//		送信メッセージ入力
+//	*/
+//	sendto();	// 送信
+//	recvfrom();	// 受信
+//	/*
+//	出力
+//	*/
+//}
+//closesocket()		// ソケット破棄
+//WSACleanup()		// WinSock終了処理
