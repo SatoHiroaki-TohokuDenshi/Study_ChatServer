@@ -7,19 +7,19 @@ using std::endl;
 
 ChatServer::ChatServer() :
 	serverPort_(8888), messageLength_(1024),
-	sock_(), toAddr_(), tolen_(sizeof(toAddr_))
+	sock_()
 {
 }
 
 ChatServer::ChatServer(unsigned short port) :
 	serverPort_(port), messageLength_(1024),
-	sock_(), toAddr_(), tolen_(sizeof(toAddr_))
+	sock_()
 {
 }
 
 ChatServer::ChatServer(unsigned short port, unsigned int length) :
 	serverPort_(port), messageLength_(length),
-	sock_(), toAddr_(), tolen_(sizeof(toAddr_))
+	sock_()
 {
 }
 
@@ -72,14 +72,6 @@ bool ChatServer::Loop() {
 			delete[] buff;
 		}
 
-		string tmp = "";
-		cout << "Want to Close Connection? (Y / N) : ";
-		cin >> tmp;
-		if (tmp == "Y") {
-			cout << "Now Closing Connection..." << endl;
-			break;
-		}
-
 		///// メッセージ送信 /////
 		//char message[];	//メッセージ
 		//std::cout << "Input Message : ";
@@ -90,10 +82,18 @@ bool ChatServer::Loop() {
 		cin >> message;
 		//std::getline(cin, message);
 
-		if (sendto(sock_, message.c_str(), messageLength_, 0, (SOCKADDR*)&toAddr_, tolen_) == SOCKET_ERROR) {
+		if (sendto(sock_, message.c_str(), messageLength_, 0, (SOCKADDR*)&fromAddr, fromlen) == SOCKET_ERROR) {
 			cout << "Error : sendto" << endl;
 			return true;
 		}
+		string tmp = "";
+		cout << "Want to Close Connection? (Y / N) : ";
+		cin >> tmp;
+		if (tmp == "Y") {
+			cout << "Now Closing Connection..." << endl;
+			break;
+		}
+
 	}
 }
 

@@ -14,10 +14,6 @@ private:
 	unsigned int messageLength_;	//Å‘å•¶š”
 
 	SOCKET sock_;
-
-	string serverIP_;
-	SOCKADDR_IN toAddr_;
-	int tolen_;
 public:
 	ChatServer();
 	ChatServer(unsigned short port);
