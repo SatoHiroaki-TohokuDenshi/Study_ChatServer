@@ -64,7 +64,7 @@ bool ChatServer::Loop() {
 		if (recvfrom(sock_, buff, messageLength_, 0, (SOCKADDR*)&fromAddr, &fromlen) == SOCKET_ERROR) {
 			cout << "Error : Recieve Message" << endl;
 			delete[] buff;
-			return true;
+			return false;
 		}
 		else {
 			//•\Ž¦
@@ -84,7 +84,7 @@ bool ChatServer::Loop() {
 
 		if (sendto(sock_, message.c_str(), messageLength_, 0, (SOCKADDR*)&fromAddr, fromlen) == SOCKET_ERROR) {
 			cout << "Error : sendto" << endl;
-			return true;
+			return false;
 		}
 		string tmp = "";
 		cout << "Want to Close Connection? (Y / N) : ";
@@ -93,8 +93,8 @@ bool ChatServer::Loop() {
 			cout << "Now Closing Connection..." << endl;
 			break;
 		}
-
 	}
+	return true;
 }
 
 bool ChatServer::ReleaseSocket() {
